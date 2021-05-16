@@ -25,13 +25,24 @@ typedef struct funcoes{
   int *variavel;
 }funcao;
 
-char* operacoes(char*line, funcao f){
+void operacoes(char*line, funcao f){
   int dest,var1,var2;
   char p1,p2,op;
   int r = sscanf(line, "vi%d = %ci%d %c %ci%d",&dest,&p1,&var1,&op,&p2,&var2);
 
+  if(r == 3){             // se for uma atribuição simples do tipo vi1 = vi2
+    if(p1 == 'c'){        // se for vi1 = ci1
 
-    printf("  movl ");
+      printf("  movl $%d, %d(%%rbp)\n\n", var1, f.variavel[dest]);  
+
+    }else{                // se for vi1 = vi2
+      printf("  movl %d(%%rbp), %%r10d\n", f.variavel[var1]);
+      printf("  movl %%r10d, %d(%%rbp)\n\n",f.variavel[dest]);
+
+    }
+  }else if(r > 3){        // se for uma operação mais complexa
+
+    printf("  movl ");    
     if(p1 == 'c'){
 
       printf("$%d, %%r10d\n", var1);
@@ -44,6 +55,7 @@ char* operacoes(char*line, funcao f){
     if(op == '+') printf("  addl ");
     if(op == '*') printf("  imull ");
     if(op == '-') printf("  subl ");
+
     if(p1 == 'c'){
 
       printf("$%d, %%r10d\n", var2);
@@ -55,8 +67,43 @@ char* operacoes(char*line, funcao f){
     }
 
     printf("  movl %%r10d, %d(%%rbp)\n\n", f.variavel[dest]);
+  }
 
 }
+
+void set_array(funcao f, char * line){
+  int array, index,value;
+  char p1;
+
+  int r = sscanf(line,"set va%d index ci%d with %ci%d",&array,&index,&p1,&value);
+  printf("  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
+
+  if(p1 == 'c') printf("  movl $%d, %d(%%r10)\n\n", value, index);
+  else printf("  movl %d(%%rbp), %%r8d\n  movl %%r8d, %d(%%r10)\n\n", f.variavel[value], index);
+  
+}
+
+void get_array(funcao f, char* line){
+  int array,index,var;
+  char p1;
+  int r = sscanf(line, "get %ca%d index ci%d to vi%d",&p1, &array, &index, &var);
+
+  if(p1 == 'v'){
+    printf("  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
+    printf("  movl %d(%%r10), %%r8d\n", f.variavel[index]);
+    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+  }else if(array == 1){
+    printf("  movl %d(%%rdi), %%r8d\n", f.variavel[index]);
+    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+  }else if(array == 2){
+    printf("  movl %d(%%rsi), %%r8d\n", f.variavel[index]);
+    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+  }else if(array == 3){
+    printf("  movl %d(%%rdx), %%r8d\n", f.variavel[index]);
+    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+  }
+}
+
 
 int main()
 {
@@ -74,14 +121,14 @@ int main()
     count++;
     remove_newline(line);
 
-    // Verifica se line começa com 'end' (3 letras)
+    // ---------------------------- END ------------------------------------------
     if (strncmp(line, "end", 6) == 0) {
       printf("leave\nret\n\n");
       continue;
     }
 
     
-    // verifica função
+    // -------------------- CABEÇALHO FUNÇÃO----------------------------------------
     r = sscanf(line, "function f%c p%c1, p%c2, p%c3", &f, &p1, &p2, &p3);
     
     if (r >= 2) {
@@ -91,7 +138,7 @@ int main()
       continue;
     }
     
-    // Verifica se é um 'if'
+    // -------------------------------IF----------------------------------------------
     r = sscanf(line, "if v%d > v%d", &i1, &i2);
     if (r == 2) {
       printf("Linha %d: %s\n", count, line);
@@ -100,15 +147,15 @@ int main()
       continue;
     }
 
-    // aciona o valor lógico bloco
+    //----------------------------------------DEF----------------------------------------
     if(strncmp(line,"def",3) == 0) {
       bloco = 1;
       continue;
     }
     
-    // BLOCO DE DEFINIÇÃO DE VARIAVEL
+    // -----------------------------BLOCO DE DEFINIÇÃO DE VARIAVEL--------------------------
     if(bloco == 1){
-      // se for um int
+      // ----------------DECLARAÇÃO INT--------------------------------
       if(strncmp(line,"var",3) == 0){
         r = sscanf(line,"var vi%d", &i1);     // pega o numero da variavel
         f1.qtd_var++;                         // inc a quantidade de variaveis da funcao
@@ -124,7 +171,7 @@ int main()
 
       }
 
-      // se for um array de int
+      // --------------DECLARAÇÃO ARRAY-----------------------------------
       if(strncmp(line,"vet",3)==0){
         r = sscanf(line,"vet va%d size ci%d", &i1,&i2);
         f1.qtd_var++;
@@ -139,7 +186,7 @@ int main()
         f1.variavel[i1] = f1.tam_pilha * -1;
       }
 
-      // finaliza o bloco
+      // ------------------------ENDDEF------------------------------------------
       if(strncmp(line,"enddef",6)==0){
         if(f1.tam_pilha != 0){
         if(f1.tam_pilha % 16 != 0){
@@ -149,20 +196,32 @@ int main()
         sprintf(temp, "  subq $%d, %%rsp\n\n", f1.tam_pilha);
         strcat(f1.str, temp);
       }
-      printf("%s",f1.str);
+      printf("%s\n",f1.str);
         bloco = 0;
       }
-
-    }else if(line[1] == 'i' || line[1] == 'a'){  //Operações com as variaveis
+      //------------------------OPERAÇÕES COM AS VARIAVEIS--------------------------------------------
+    }else if(line[1] == 'i' || line[1] == 'a'){  
 
       operacoes(line,f1);
-        
-    }else if(strncmp(line,"return p",8) != 0 && strncmp(line, "return v", 8) != 0){
-      sscanf(line,"return %d",&i1);
-     // printf("  $%d, %%eax\n",i1);
       continue;
 
-    }else if(strncmp(line, "return p",8) == 0){
+      //-----------------------SETAR VALOR DE ELEMENTO DO ARRAY---------------------------------------
+    
+    }else if(strncmp(line,"set",3) == 0){
+
+      set_array(f1,line);
+      continue;
+      //----------------------PEGAR ELEMENTO DE UM ARRAY------------------------------------------
+    }else if(strncmp(line, "get", 3) == 0){
+
+      get_array(f1,line);
+      continue;
+    //-----------------------------RETURNS-----------------------------------------------------
+    }else if(sscanf(line, "return ci%d",&i1) == 1){ 
+      printf("  movl $%d, %%eax\n",i1);
+      continue;
+
+    }else if(strncmp(line, "return p",8) == 0){   
 
       sscanf(line,"return p%c%d",&p1,&i1);
       if(i1 == 1) {
@@ -178,8 +237,8 @@ int main()
         continue;
       }
     }else if(strncmp(line, "return v", 8) == 0){
-     // sscanf(line, "return v%*c%d", i1);
-     // sprintf(temp, "movl %d(%%rbp), %eax", f1.pilha[i1].posicao);
+      sscanf(line, "return vi%d", &i1);
+      printf("  movl %d(%%rbp), %%eax\n\n", f1.variavel[i1]);
     }  
 
   }
