@@ -17,6 +17,15 @@ void remove_newline(char *ptr)
   
 }
 
+typedef struct var{
+  int x;
+  int * v;
+}variavel;
+
+typedef struct parametros{
+  int rdi,rsi,rdx;
+}parametro;
+
 int main()
 {
   char v1;
@@ -25,7 +34,7 @@ int main()
   int inicio, fim, passo;
   char line[LINESZ],temp[LINESZ];
   int count = 0, bloco = 0;
-
+  
   // Lê uma linha por vez
   while (fgets(line, LINESZ, stdin) != NULL) {
     count++;
@@ -33,8 +42,8 @@ int main()
 
     // Verifica se line começa com 'end' (3 letras)
     if (strncmp(line, "end", 6) == 0) {
-      printf("Linha %d: leave\nret\n", count);
-	      
+      printf("leave\nret\n");
+	    
       continue;
     }
 
@@ -43,21 +52,26 @@ int main()
     r = sscanf(line, "function f%c p%c1, p%c2, p%c3", &f, &p1, &p2, &p3);
     
     if (r == 4) {
-      printf("Linha %d: %s\n", count, line);
+      printf(".globl f%c\nf%c:\n  pushq %%rbp\n  movq %%rsp, %%rbp\n",f,f);
+      /*printf("Linha %d: %s\n", count, line);
       printf("Lido 'f%c' 'p%c1' 'p%c2' 'p%c3'\n",f,  p1, p2, p3);
-      printf("---\n");
+      printf("---\n");*/
       continue;
     }
     if (r == 3) {
-      printf("Linha %d: %s\n", count, line);
+      printf(".globl f%c\nf%c:\n  pushq %%rbp\n  movq %%rsp, %%rbp\n",f,f);
+      /*printf("Linha %d: %s\n", count, line);
       printf("Lido 'f%c' 'p%c1' 'p%c2'\n",f, p1, p2) ;
-      printf("---\n");
+      printf("---\n");*/
       continue;
     }
     if (r == 2) {
-      printf("Linha %d: %s\n", count, line);
+      printf(".globl f%c\nf%c:\n  pushq %%rbp\n  movq %%rsp, %%rbp\n",f,f);
+      
+      /*printf("Linha %d: %s\n", count, line);
       printf("Lido 'f%c' 'p%c1'\n",f, p1) ;
-      printf("---\n");
+      printf("---\n");*/
+
       continue;
     }
     
@@ -96,7 +110,7 @@ int main()
       if(strncmp(line,"enddef",6)==0){
         bloco = 0;
       }
-    }else{
+    }else{    //Operações com as variaveis
       if(line[1] == 'i' || line[1] == 'a'){
         char*t;
         printf("linha %d: %s\n",count, line);
@@ -119,8 +133,25 @@ int main()
     
         }
         printf("\n");
-      }else if(line[1] == 'e'){
-        printf("linha %d: movl $0, %%eax\n", count);
+      }else if(strncmp(line,"return",6) == 0){
+        if(strncmp(line,"return p",8) != 0){
+          sscanf(line,"return %d",&i1);
+          printf("  movl $%d, %%eax\n",i1);
+        }
+
+        sscanf(line,"return p%c%d",&p1,&i1);
+        if(i1 == 1) {
+          printf("  movl %%edi, %%eax\n");
+          continue;
+          }
+        if(i1 == 2) {
+          printf("  movl %%esi, %%eax\n");
+          continue;
+          }
+        if(i1 == 3) {
+          printf("  movl %%edx, %%eax\n");
+          continue;
+          }
       }
     }
 
