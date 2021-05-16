@@ -17,16 +17,12 @@ void remove_newline(char *ptr)
   
 }
 
-typedef struct var{
-  char str_var[10];
-  int posicao;
-}variavel;
 
 typedef struct funcoes{
   int tam_pilha,qtd_var;
   char str[LINESZ];
   char *op;
-  variavel *pilha;
+  int *variavel;
 }funcao;
 
 char* operacoes(char*line, funcao f){
@@ -97,12 +93,12 @@ int main()
         f1.tam_pilha += 4;                    // soma +4 no tamanho da pilha
         
         if(f1.qtd_var == 1){
-          f1.pilha = malloc(sizeof(variavel));  // se for o primeiro elemento faz o malloc
+          f1.variavel = malloc(sizeof(int));  // se for o primeiro elemento faz o malloc
         }else{
-        //  realloc(f1.pilha,f1.qtd_var * sizeof(variavel));  // senão faz o realloc
+          realloc(f1.variavel,f1.qtd_var * sizeof(int));  // senão faz o realloc
         }
 
-        f1.pilha[i1].posicao = f1.tam_pilha * -1;    // posição do elemento adicionado na pilha
+        f1.variavel[i1] = f1.tam_pilha * -1;    // posição do elemento adicionado na pilha
 
       }
 
@@ -113,18 +109,19 @@ int main()
         f1.tam_pilha += i2*4;
 
         if(f1.qtd_var == 1){
-          f1.pilha = malloc(sizeof(variavel));  // se for o primeiro elemento faz o malloc
+          f1.variavel = malloc(sizeof(int));  // se for o primeiro elemento faz o malloc
         }else{
-        //  realloc(f1.pilha,f1.qtd_var * sizeof(variavel));  // senão faz o realloc
+          realloc(f1.variavel,f1.qtd_var * sizeof(int));  // senão faz o realloc
         }
 
-        f1.pilha[i1].posicao = f1.tam_pilha * -1;
+        f1.variavel[i1] = f1.tam_pilha * -1;
       }
 
       // finaliza o bloco
       if(strncmp(line,"enddef",6)==0){
         bloco = 0;
       }
+
     }else if(line[1] == 'i' || line[1] == 'a'){  //Operações com as variaveis
 
       //strcat(f1.op, operacoes(line, f1));
