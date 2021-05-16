@@ -26,8 +26,38 @@ typedef struct funcoes{
 }funcao;
 
 char* operacoes(char*line, funcao f){
-  
+  int dest,var1,var2;
+  char p1,p2,op;
+  int r = sscanf(line, "vi%d = %ci%d %c %ci%d",&dest,&p1,&var1,&op,&p2,&var2);
+
+
+    printf("  movl ");
+    if(p1 == 'c'){
+
+      printf("$%d, %%r10d\n", var1);
+
+    }else{
+
+      printf("%d(%%rbp), %%r10d\n", f.variavel[var1]);
+
+    }
+    if(op == '+') printf("  addl ");
+    if(op == '*') printf("  imull ");
+    if(op == '-') printf("  subl ");
+    if(p1 == 'c'){
+
+      printf("$%d, %%r10d\n", var2);
+
+    }else{
+
+      printf("%d(%%rbp), %%r10d\n", f.variavel[var2]);
+
+    }
+
+    printf("  movl %%r10d, %d(%%rbp)\n\n", f.variavel[dest]);
+
 }
+
 int main()
 {
   char v1;
@@ -36,6 +66,7 @@ int main()
   int inicio, fim, passo;
   char line[LINESZ],temp[LINESZ];
   int count = 0, bloco = 0;
+  void *usr;
   funcao f1;
   
   // Lê uma linha por vez
@@ -45,15 +76,6 @@ int main()
 
     // Verifica se line começa com 'end' (3 letras)
     if (strncmp(line, "end", 6) == 0) {
-      if(f1.tam_pilha != 0){
-        if(f1.tam_pilha % 16 != 0){
-          i1 = f1.tam_pilha % 16;
-          f1.tam_pilha += i1;
-        }
-        sprintf(temp, "  subq $%d, %%rsp\n", f1.tam_pilha);
-        strcat(f1.str, temp);
-      }
-      printf("%s",f1.str);
       printf("leave\nret\n\n");
       continue;
     }
@@ -95,7 +117,7 @@ int main()
         if(f1.qtd_var == 1){
           f1.variavel = malloc(sizeof(int));  // se for o primeiro elemento faz o malloc
         }else{
-          realloc(f1.variavel,f1.qtd_var * sizeof(int));  // senão faz o realloc
+          usr = realloc(f1.variavel,f1.qtd_var * sizeof(int));  // senão faz o realloc
         }
 
         f1.variavel[i1] = f1.tam_pilha * -1;    // posição do elemento adicionado na pilha
@@ -111,7 +133,7 @@ int main()
         if(f1.qtd_var == 1){
           f1.variavel = malloc(sizeof(int));  // se for o primeiro elemento faz o malloc
         }else{
-          realloc(f1.variavel,f1.qtd_var * sizeof(int));  // senão faz o realloc
+         usr = realloc(f1.variavel,f1.qtd_var * sizeof(int));  // senão faz o realloc
         }
 
         f1.variavel[i1] = f1.tam_pilha * -1;
@@ -119,16 +141,25 @@ int main()
 
       // finaliza o bloco
       if(strncmp(line,"enddef",6)==0){
+        if(f1.tam_pilha != 0){
+        if(f1.tam_pilha % 16 != 0){
+          i1 = f1.tam_pilha % 16;
+          f1.tam_pilha += i1;
+        }
+        sprintf(temp, "  subq $%d, %%rsp\n\n", f1.tam_pilha);
+        strcat(f1.str, temp);
+      }
+      printf("%s",f1.str);
         bloco = 0;
       }
 
     }else if(line[1] == 'i' || line[1] == 'a'){  //Operações com as variaveis
 
-      //strcat(f1.op, operacoes(line, f1));
+      operacoes(line,f1);
         
-    }else if(strncmp(line,"return p",8) != 0){
+    }else if(strncmp(line,"return p",8) != 0 && strncmp(line, "return v", 8) != 0){
       sscanf(line,"return %d",&i1);
-      printf("  movl $%d, %%eax\n",i1);
+     // printf("  $%d, %%eax\n",i1);
       continue;
 
     }else if(strncmp(line, "return p",8) == 0){
