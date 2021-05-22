@@ -17,6 +17,14 @@ enddef
 1set va3 index ci5 with ci2
 get pa1 index ci5 to vi1
 
+if vi1
+vi1 = ci0
+endif
+
+if vi1
+return vi1
+endif
+
 vi2 = call f1 vi1 va3
 vi2 = call f1 ci5 pa1
 return vi2

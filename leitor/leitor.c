@@ -308,6 +308,37 @@ void call_function (funcao*f, char *line){
   }
   printf("  movq -8(%%rbp), %%rdi\n  movq -16(%%rbp), %%rsi\n  movq -24(%%rbp), %%rdx\n\n");
 }
+
+//--------------------------- IF (CONDICIONAL)-----------------------------------
+
+void condicional(funcao f, char* line, int*cont){
+  int val;
+  char tipo;
+  printf("dgasuda\n");
+  sscanf("if %ci%d", &tipo, &val);
+
+  if(tipo == 'v'){
+    printf("  cmpl $0, %d(%%rbp)\n", f.variavel[val]);
+  }
+
+  if(tipo == 'p'){
+    
+    if(val == 1) printf("  cmpl $0, %%edi\n");
+    if(val == 2) printf("  cmpl $0, %%esi\n");
+    if(val == 3) printf("  cmpl $0, %%edx\n");
+
+  }
+
+  if(tipo == 'c'){
+
+    printf("  movl $%d, %%r10d\n", val);
+    printf("  cmpl $0, %%r10d\n");
+
+  }
+
+  printf("jnz after%d\n", *cont);
+  *cont ++;
+}
   
 // ---------- MAIN-------------------------------------------------------------------------------------
 int main()
@@ -315,12 +346,13 @@ int main()
   char v1;
   char p1,p2,p3,f,t1,t2,t3;
   int r, i1, i2;
-  int inicio, fim, passo;
+  int inicio, fim, passo, contador_if = 0;
   char line[LINESZ],temp[LINESZ];
   int count = 0, bloco = 0;
   void *usr;
   funcao f1;
   
+  printf(".section .rodata\n.data\n\n.text\n\n");
   // Lê uma linha por vez
   while (fgets(line, LINESZ, stdin) != NULL) {
     count++;
@@ -346,13 +378,9 @@ int main()
     }
     
     // -------------------------------IF (TEM QUE FAZER)----------------------------------------------
-    r = sscanf(line, "if v%d > v%d", &i1, &i2);
-    if (r == 2) {
-      printf("Linha %d: %s\n", count, line);
-      printf("Indices: %d e %d\n", i1, i2);
-      printf("---\n");
-      continue;
-    }
+    if(strncmp(line,"if",2) == 0) condicional(f1, line, &contador_if);
+
+    if(strncmp(line, "endif", 5) == 0) printf("after%d:\n", contador_if);
 
     //----------------------------------------DEF----------------------------------------
     if(strncmp(line,"def",3) == 0) {
