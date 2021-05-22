@@ -4,6 +4,12 @@
 
 #define LINESZ 256
 
+typedef struct funcoes{
+  int tam_pilha,qtd_var;
+  char str[LINESZ];
+  int *variavel;
+}funcao;
+
 // Remove o '\n' do fim da linha
 void remove_newline(char *ptr)
 {
@@ -17,96 +23,108 @@ void remove_newline(char *ptr)
   
 }
 
+FILE* op_file (){
 
-typedef struct funcoes{
-  int tam_pilha,qtd_var;
-  char str[LINESZ];
-  int *variavel;
-}funcao;
+  FILE *exit = fopen("prog.s","a");
+
+  return exit; 
+}
+
+void cl_file (FILE *exit){
+  fclose(exit);
+}
+
 
 void operacoes(char*line, funcao f){
   int dest,var1,var2;
   char p1,p2,op;
+  FILE * exit = op_file();
   int r = sscanf(line, "vi%d = %ci%d %c %ci%d",&dest,&p1,&var1,&op,&p2,&var2);
 
   if(r == 3){             // se for uma atribuição simples do tipo vi1 = vi2
     if(p1 == 'c'){        // se for vi1 = ci1
 
-      printf("  movl $%d, %d(%%rbp)\n\n", var1, f.variavel[dest]);  
+      fprintf(exit,"  movl $%d, %d(%%rbp)\n\n", var1, f.variavel[dest]);  
 
     }else{                // se for vi1 = vi2
-      printf("  movl %d(%%rbp), %%r10d\n", f.variavel[var1]);
-      printf("  movl %%r10d, %d(%%rbp)\n\n",f.variavel[dest]);
+      fprintf(exit,"  movl %d(%%rbp), %%r10d\n", f.variavel[var1]);
+      fprintf(exit,"  movl %%r10d, %d(%%rbp)\n\n",f.variavel[dest]);
 
     }
   }else if(r > 3){        // se for uma operação mais complexa
 
-    printf("  movl ");    
+    fprintf(exit,"  movl ");    
     if(p1 == 'c'){
 
-      printf("$%d, %%r10d\n", var1);
+      fprintf(exit,"$%d, %%r10d\n", var1);
 
     }else{
 
-      printf("%d(%%rbp), %%r10d\n", f.variavel[var1]);
+      fprintf(exit,"%d(%%rbp), %%r10d\n", f.variavel[var1]);
 
     }
-    if(op == '+') printf("  addl ");
-    if(op == '*') printf("  imull ");
-    if(op == '-') printf("  subl ");
+    if(op == '+') fprintf(exit,"  addl ");
+    if(op == '*') fprintf(exit,"  imull ");
+    if(op == '-') fprintf(exit,"  subl ");
 
     if(p1 == 'c'){
 
-      printf("$%d, %%r10d\n", var2);
+      fprintf(exit,"$%d, %%r10d\n", var2);
 
     }else{
 
-      printf("%d(%%rbp), %%r10d\n", f.variavel[var2]);
+      fprintf(exit,"%d(%%rbp), %%r10d\n", f.variavel[var2]);
 
     }
 
-    printf("  movl %%r10d, %d(%%rbp)\n\n", f.variavel[dest]);
+    fprintf(exit,"  movl %%r10d, %d(%%rbp)\n\n", f.variavel[dest]);
   }
-
+  fclose(exit);
 }
 
 void set_array(funcao f, char * line){
   int array, index,value;
   char p1;
+  FILE * exit = op_file();
 
   int r = sscanf(line,"set va%d index ci%d with %ci%d",&array,&index,&p1,&value);
-  printf("  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
+  fprintf(exit,"  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
 
-  if(p1 == 'c') printf("  movl $%d, %d(%%r10)\n\n", value, index);
-  else printf("  movl %d(%%rbp), %%r8d\n  movl %%r8d, %d(%%r10)\n\n", f.variavel[value], index);
-  
+  if(p1 == 'c') fprintf(exit,"  movl $%d, %d(%%r10)\n\n", value, index);
+  else fprintf(exit,"  movl %d(%%rbp), %%r8d\n  movl %%r8d, %d(%%r10)\n\n", f.variavel[value], index);
+  fclose(exit);
 }
 
 void get_array(funcao f, char* line){
   int array,index,var;
   char p1;
   int r = sscanf(line, "get %ca%d index ci%d to vi%d",&p1, &array, &index, &var);
-
+  FILE * exit = op_file();
   if(p1 == 'v'){
-    printf("  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
-    printf("  movl %d(%%r10), %%r8d\n", f.variavel[index]);
-    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+    fprintf(exit,"  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
+    fprintf(exit,"  movl %d(%%r10), %%r8d\n", f.variavel[index]);
+    fprintf(exit,"  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
   }else if(array == 1){
-    printf("  movl %d(%%rdi), %%r8d\n", f.variavel[index]);
-    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+    fprintf(exit,"  movl %d(%%rdi), %%r8d\n", f.variavel[index]);
+    fprintf(exit,"  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
   }else if(array == 2){
-    printf("  movl %d(%%rsi), %%r8d\n", f.variavel[index]);
-    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+    fprintf(exit,"  movl %d(%%rsi), %%r8d\n", f.variavel[index]);
+    fprintf(exit,"  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
   }else if(array == 3){
-    printf("  movl %d(%%rdx), %%r8d\n", f.variavel[index]);
-    printf("  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
+    fprintf(exit,"  movl %d(%%rdx), %%r8d\n", f.variavel[index]);
+    fprintf(exit,"  movl %%r8d, %d(%%rbp)\n\n", f.variavel[var]);
   }
+  fclose(exit);
 }
 
 void cabecalho_funcao (char f, funcao* func){
-  printf(".globl f%c\nf%c:\n  pushq %%rbp\n  movq %%rsp, %%rbp\n",f,f);
+  FILE * exit = op_file();
+
+  fprintf(exit,".globl f%c\nf%c:\n  pushq %%rbp\n  movq %%rsp, %%rbp\n",f,f);
   func->tam_pilha = 24;
   func->qtd_var = 0;
+
+  fclose(exit);
 }
 
 void declaracao_int (funcao *f1, char* line){
@@ -148,6 +166,8 @@ void declaracao_vet (funcao * f1, char* line){
 int enddef(funcao* f1){
   int i1;
   char temp[25];
+  FILE * exit = op_file();
+
   if(f1->tam_pilha != 0){
     if(f1->tam_pilha % 16 != 0){
       i1 = f1->tam_pilha % 16;
@@ -156,9 +176,10 @@ int enddef(funcao* f1){
     sprintf(temp, "  subq $%d, %%rsp\n\n", f1->tam_pilha);
     strcat(f1->str, temp);
 
-    printf("%s\n",f1->str);
+    fprintf(exit,"%s\n",f1->str);
   }
 
+  fclose(exit);
   return 0;
 }
 
@@ -169,14 +190,14 @@ void call_function (funcao*f, char *line){
   char *func = malloc(2);
   int param2[3] = {-8,-16,-24};
   int c = -1, index, cont_p = 0;
-
+  FILE * exit = op_file();
   strcpy(parametros[0], "%edi");
   strcpy(parametros[1], "%esi");
   strcpy(parametros[2], "%edx");
 
   temp = strtok(line, " ");
   strcpy(dest,temp);
-  printf("  movq %%rdi, -8(%%rbp)\n  movq %%rsi, -16(%%rbp)\n  movq %%rdx, -24(%%rbp)\n\n");
+  fprintf(exit,"  movq %%rdi, -8(%%rbp)\n  movq %%rsi, -16(%%rbp)\n  movq %%rdx, -24(%%rbp)\n\n");
 
   while(temp != NULL){
     if(c != -1){
@@ -185,37 +206,37 @@ void call_function (funcao*f, char *line){
       }
       else if(temp[0] == 'c' && temp[1] == 'i'){
 
-        printf("  movl $%d, %s\n", temp[2]-'0', parametros[c]);
+        fprintf(exit,"  movl $%d, %s\n", temp[2]-'0', parametros[c]);
         c++;
 
       }else if(temp[0] == 'v' && temp[1] == 'i'){
 
         index = temp[2] - '0';
-        printf("  movl %d(%%rbp), %s\n",f->variavel[index], parametros[c]);
+        fprintf(exit,"  movl %d(%%rbp), %s\n",f->variavel[index], parametros[c]);
         c++;
 
       }else if(temp[0] == 'v' && temp[1] == 'a'){
 
         index = temp[2] - '0';
-        printf("  leaq %d(%%rbp), %%r10\n", f->variavel[index]);
+        fprintf(exit,"  leaq %d(%%rbp), %%r10\n", f->variavel[index]);
         parametros[c][1] = 'r';
-        printf("  movq %%r10, %s\n", parametros[c]);
+        fprintf(exit,"  movq %%r10, %s\n", parametros[c]);
         parametros[c][1] = 'e';
         c++;
 
       }else if(temp[0] == 'p' && temp[1] == 'i'){
         
         index = temp[2] - '0';
-        printf("  movl %d(%%rbp), %%r10d\n", param2[index]);
-        printf("  movl %%r10d, %s\n", parametros[c]);
+        fprintf(exit,"  movl %d(%%rbp), %%r10d\n", param2[index]);
+        fprintf(exit,"  movl %%r10d, %s\n", parametros[c]);
         c++;
 
       }else if(temp[0] == 'p' && temp[1] == 'a'){
 
         index = temp[2] - '0';
-        printf("  leaq %d(%%rbp), %%r10\n", param2[index]);
+        fprintf(exit,"  leaq %d(%%rbp), %%r10\n", param2[index]);
         parametros[c][1] = 'r';
-        printf("  movq %%r10, %s\n", parametros[c]);
+        fprintf(exit,"  movq %%r10, %s\n", parametros[c]);
         parametros[c][1] = 'e';
         c++;
       }
@@ -224,32 +245,41 @@ void call_function (funcao*f, char *line){
     temp = strtok(NULL, " ");
   }
 
-  printf("\n  call %s\n", func);
+  fprintf(exit,"\n  call %s\n", func);
  
   if(dest[0] == 'v' && dest[1] == 'i'){
 
     index = dest[2] - '0';
-    printf("  movl %%eax, %d(%%rbp)\n\n",f->variavel[index]);
+    fprintf(exit,"  movl %%eax, %d(%%rbp)\n\n",f->variavel[index]);
 
   }else if(dest[0] == 'v' && dest[1] == 'a'){
 
     index = dest[2] - '0';
-    printf("  movq %%rax, %d(%%rbp)\n\n", f->variavel[index]);
+    fprintf(exit,"  movq %%rax, %d(%%rbp)\n\n", f->variavel[index]);
 
   }else if(dest[0] == 'p' && dest[1] == 'i'){
         
     index = dest[2] - '0';
-    printf("  movl %%eax, %d(%%rbp)\n\n", param2[index]);
+    fprintf(exit,"  movl %%eax, %d(%%rbp)\n\n", param2[index]);
 
   }else if(dest[1] == 'a'){
 
     index = dest[2] - '0';
-    printf("  movq %%rax, %d(%%rbp)\n\n", param2[index]);
+    fprintf(exit,"  movq %%rax, %d(%%rbp)\n\n", param2[index]);
   
   }
-  printf("  movq -8(%%rbp), %%rdi\n  movq -16(%%rbp), %%rsi\n  movq -24(%%rbp), %%rdx\n\n");
+  fprintf(exit,"  movq -8(%%rbp), %%rdi\n  movq -16(%%rbp), %%rsi\n  movq -24(%%rbp), %%rdx\n\n");
+
+  fclose(exit);
 }
   
+void inicio_p(){
+  FILE * exit = op_file();
+
+  fprintf(exit, ".section .rodata\n.data\n\n.text\n\n");
+
+  fclose(exit);
+}
 // ---------- MAIN-------------------------------------------------------------------------------------
 int main()
 {
@@ -261,7 +291,10 @@ int main()
   int count = 0, bloco = 0;
   void *usr;
   funcao f1;
-  
+  FILE * exit;
+
+  //Inicialisa prog em S
+  inicio_p();
   // Lê uma linha por vez
   while (fgets(line, LINESZ, stdin) != NULL) {
     count++;
@@ -269,7 +302,9 @@ int main()
 
     // ---------------------------- END ------------------------------------------
     if (strncmp(line, "end", 6) == 0) {
-      printf("leave\nret\n\n");
+      exit = op_file();
+      fprintf(exit,"leave\nret\n\n");
+      fclose(exit);
       f1.qtd_var = 0;
       strcpy(f1.str, "");
       f1.tam_pilha = 24;
@@ -289,9 +324,11 @@ int main()
     // -------------------------------IF----------------------------------------------
     r = sscanf(line, "if v%d > v%d", &i1, &i2);
     if (r == 2) {
-      printf("Linha %d: %s\n", count, line);
-      printf("Indices: %d e %d\n", i1, i2);
-      printf("---\n");
+      exit = op_file();
+      fprintf(exit,"Linha %d: %s\n", count, line);
+      fprintf(exit,"Indices: %d e %d\n", i1, i2);
+      fprintf(exit,"---\n");
+      fclose(exit);
       continue;
     }
 
@@ -345,32 +382,34 @@ int main()
       get_array(f1,line);
       continue;
     //-----------------------------RETURNS-----------------------------------------------------
-    } 
-    if(sscanf(line, "return ci%d",&i1) == 1){ 
-      printf("  movl $%d, %%eax\n",i1);
+    }
+    exit = op_file();      
+    
+    if(sscanf(line, "return ci%d",&i1) == 1){
+      fprintf(exit,"  movl $%d, %%eax\n",i1);
       continue;
 
-    }else if(strncmp(line, "return p",8) == 0){   
+    }else if(strncmp(line, "return p",8) == 0){
 
       sscanf(line,"return p%c%d",&p1,&i1);
       if(i1 == 1) {
-        printf("  movl %%edi, %%eax\n");
+        fprintf(exit,"  movl %%edi, %%eax\n");
         continue;
       }
       if(i1 == 2) {
-        printf("  movl %%esi, %%eax\n");
+        fprintf(exit,"  movl %%esi, %%eax\n");
         continue;
       }
       if(i1 == 3) {
-        printf("  movl %%edx, %%eax\n");
+        fprintf(exit,"  movl %%edx, %%eax\n");
         continue;
       }
     }else if(strncmp(line, "return v", 8) == 0){
       sscanf(line, "return vi%d", &i1);
-      printf("  movl %d(%%rbp), %%eax\n\n", f1.variavel[i1]);
-    }  
-
+      fprintf(exit,"  movl %d(%%rbp), %%eax\n\n", f1.variavel[i1]);
+    }
+  
   }
-
+  fclose(exit);
   return 0;
 }
