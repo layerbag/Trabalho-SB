@@ -314,9 +314,9 @@ void call_function (funcao*f, char *line){
 void condicional(funcao f, char* line, int*cont){
   int val;
   char tipo;
-  printf("dgasuda\n");
-  sscanf("if %ci%d", &tipo, &val);
 
+  sscanf(line,"if %ci%d", &tipo, &val);
+  
   if(tipo == 'v'){
     printf("  cmpl $0, %d(%%rbp)\n", f.variavel[val]);
   }
@@ -336,8 +336,7 @@ void condicional(funcao f, char* line, int*cont){
 
   }
 
-  printf("jnz after%d\n", *cont);
-  *cont ++;
+  printf("  jnz after%d\n\n", *cont);
 }
   
 // ---------- MAIN-------------------------------------------------------------------------------------
@@ -360,7 +359,6 @@ int main()
 
     // ---------------------------- END ------------------------------------------
     if (strncmp(line, "end", 6) == 0) {           // printa leave ret e torna os valores de f1 default
-      printf("leave\nret\n\n");
       f1.qtd_var = 0;
       strcpy(f1.str, "");
       f1.tam_pilha = 24;
@@ -380,7 +378,10 @@ int main()
     // -------------------------------IF (TEM QUE FAZER)----------------------------------------------
     if(strncmp(line,"if",2) == 0) condicional(f1, line, &contador_if);
 
-    if(strncmp(line, "endif", 5) == 0) printf("after%d:\n", contador_if);
+    if(strncmp(line, "endif", 5) == 0) {
+      printf("after%d:\n", contador_if);
+      contador_if++;
+    }
 
     //----------------------------------------DEF----------------------------------------
     if(strncmp(line,"def",3) == 0) {
@@ -458,15 +459,15 @@ int main()
 
       sscanf(line,"return p%c%d",&p1,&i1);
       if(i1 == 1) {                 
-        printf("  movl %%edi, %%eax\n");            // se for o primeiro parametro
+        printf("  movl %%edi, %%eax\n\nleave\nret\n");            // se for o primeiro parametro
         continue;
       }
       if(i1 == 2) {
-        printf("  movl %%esi, %%eax\n");            // se for o segundo parametro
+        printf("  movl %%esi, %%eax\n\nleave\nret\n");            // se for o segundo parametro
         continue;
       }
       if(i1 == 3) {
-        printf("  movl %%edx, %%eax\n");            // se for o terceiro parametro
+        printf("  movl %%edx, %%eax\n\nleave\nret\n");            // se for o terceiro parametro
         continue;
       }
     }
@@ -474,7 +475,7 @@ int main()
     // retorna variavel
     if(strncmp(line, "return v", 8) == 0){
       sscanf(line, "return vi%d", &i1);
-      printf("  movl %d(%%rbp), %%eax\n\n", f1.variavel[i1]);
+      printf("  movl %d(%%rbp), %%eax\n\n leave\n ret\n", f1.variavel[i1]);
     }  
 
   }
