@@ -44,15 +44,16 @@ void operacoes(char*line, funcao f){
   }
   
   else if(r > 3){        // se for uma operação mais complexa
+    
 
     printf("  movl ");    
     if(p1 == 'c'){
 
-      printf("$%d, %%r10d\n", var1);      // movl $x, %r10d
+      printf("$%d, %%eax\n", var1);      // movl $x, %r10d
 
     }else{
 
-      printf("%d(%%rbp), %%r10d\n", f.variavel[var1]);    // movl -x(%rbp), %r10d
+      printf("%d(%%rbp), %%eax\n", f.variavel[var1]);    // movl -x(%rbp), %r10d
 
     }
 
@@ -61,17 +62,26 @@ void operacoes(char*line, funcao f){
     if(op == '*') printf("  imull ");   // imull
     if(op == '-') printf("  subl ");    //subl
 
-    if(p2 == 'c'){            
+    if(op != '/'){  // caso não for divisão faz os seguintes passos:
 
-      printf("$%d, %%r10d\n", var2);    // opera x(constante) ao registrador contendo o primeiro elemento
+      if(p2 == 'c'){            
 
-    }else{
+        printf("$%d, %%eax\n", var2);    // opera x(constante) ao registrador contendo o primeiro elemento
 
-      printf("%d(%%rbp), %%r10d\n", f.variavel[var2]);  // opera x(variavel) ao registrador contendo o primeiro elemento
+      }else{
+
+        printf("%d(%%rbp), %%eax\n", f.variavel[var2]);  // opera x(variavel) ao registrador contendo o primeiro elemento
+
+      }
 
     }
+    else{ // se for divisão faz:
 
-    printf("  movl %%r10d, %d(%%rbp)\n\n", f.variavel[dest]);   // move o registrador contendo a operação para o endereço da variavel de destino
+      printf("  movl %d(%%rbp), %%ecx\n", f.variavel[var2]);  // move var2 para %ecx
+      printf("  cltd\n  idivl %%ecx\n");  // idivl de %ecx, o resultado fica em %eax
+
+    }
+    printf("  movl %%eax, %d(%%rbp)\n\n", f.variavel[dest]);   // move o registrador contendo a operação para o endereço da variavel de destino
   }
 
 }
@@ -83,6 +93,7 @@ void set_array(funcao f, char * line){
   char p1;
 
   int r = sscanf(line,"set va%d index ci%d with %ci%d",&array,&index,&p1,&value);   // extrai o numero do array, o indice do array, o tipo(c = constante, v = variavel, p = parametro), e o valor
+  index *= 4;
   printf("  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
 
   if(p1 == 'c') printf("  movl $%d, %d(%%r10)\n\n", value, index);        // se for constante move x para o endereço do array na posição index
@@ -336,7 +347,7 @@ void condicional(funcao f, char* line, int*cont){
 
   }
 
-  printf("  jnz after%d\n\n", *cont);
+  printf("  je after%d\n\n", *cont);
 }
   
 // ---------- MAIN-------------------------------------------------------------------------------------
