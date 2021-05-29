@@ -46,13 +46,11 @@ int enddef(funcao* f1){     // comandos após as definições de variáveis
 // ---------- MAIN-------------------------------------------------------------------------------------
 int main()
 {
-  char v1;
-  char p1,p2,p3,f,t1,t2,t3;
-  int r, i1, i2;
-  int inicio, fim, passo, contador_if = 0;
-  char line[LINESZ],temp[LINESZ];
+  char p1,p2,p3,f;
+  int r;
+  int  contador_if = 0;
+  char line[LINESZ];
   int count = 0, bloco = 0;
-  void *usr;
   funcao f1;
   
   printf(".section .rodata\n.data\n\n.text\n\n");

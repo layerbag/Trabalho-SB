@@ -101,7 +101,7 @@ void set_array(funcao f, char * line){
   int array, index,value;
   char p1;
 
-  int r = sscanf(line,"set %*ca%d index ci%d with %ci%d",&array,&index,&p1,&value);   // extrai o numero do array, o indice do array, o tipo(c = constante, v = variavel, p = parametro), e o valor
+  sscanf(line,"set %*ca%d index ci%d with %ci%d",&array,&index,&p1,&value);   // extrai o numero do array, o indice do array, o tipo(c = constante, v = variavel, p = parametro), e o valor
   index = index * 4;
 
   if(line[4] == 'v'){
@@ -180,10 +180,10 @@ void get_array(funcao f, char* line){
 }
 
 void declaracao_int (funcao *f1, char* line){
-  int r, i1;
+  int  i1;
   void * usr;
 
-  r = sscanf(line,"var vi%d", &i1);     // pega o numero da variavel
+    sscanf(line,"var vi%d", &i1);     // pega o numero da variavel
   f1->qtd_var++;                         // inc a quantidade de variaveis da funcao
   f1->tam_pilha += 4;                    // soma +4 no tamanho da pilha
         
@@ -198,10 +198,10 @@ void declaracao_int (funcao *f1, char* line){
 }
 
 void declaracao_vet (funcao * f1, char* line){
-  int r, i1,i2;
+  int i1,i2;
   void * usr;
 
-  r = sscanf(line,"vet va%d size ci%d", &i1,&i2);
+  sscanf(line,"vet va%d size ci%d", &i1,&i2);
   f1->qtd_var++;
   f1->tam_pilha += i2*4;
 
@@ -221,7 +221,7 @@ void call_function (funcao*f, char *line){
   char parametros[3][5];
   char *func = malloc(2);
   int param2[3] = {-8,-16,-24};
-  int c = -1, index, cont_p = 0;
+  int c = -1, index;
 
   strcpy(parametros[0], "%edi");    // preenche o vetor de strings com registradores de parametro
   strcpy(parametros[1], "%esi");
