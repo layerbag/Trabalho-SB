@@ -1,0 +1,21 @@
+function f1 pi1 pa2
+def
+var vi1
+var vi2
+enddef
+
+set pa2 index ci4 with ci20
+vi1 = ci5
+pi1 = vi1 + pi1
+pi1 = pi1 / ci2
+vi1 = pi1 * ci4
+vi1 = vi1 - ci2
+if vi1
+get pa2 index ci4 to vi2
+vi2 = call f2 vi2
+return vi2
+endif
+
+vi1 = vi1 + ci10
+return vi1
+end
