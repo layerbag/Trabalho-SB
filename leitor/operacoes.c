@@ -104,35 +104,26 @@ void set_array(funcao f, char * line){
   sscanf(line,"set %*ca%d index ci%d with %ci%d",&array,&index,&p1,&value);   // extrai o numero do array, o indice do array, o tipo(c = constante, v = variavel, p = parametro), e o valor
   index = index * 4;
 
-  if(line[4] == 'v'){
+  if(line[4] == 'v'){     // caso o array seja variavel
     printf("  leaq %d(%%rbp), %%r10\n", f.variavel[array]);
 
-    if(p1 == 'c') printf("  movl $%d, %d(%%r10)\n\n", value, index);        // se for constante move x para o endereço do array na posição index
+  }else{          // caso o array seja parametro
 
-    else if(p1 == 'v')printf("  movl %d(%%rbp), %%r8d\n  movl %%r8d, %d(%%r10)\n\n", f.variavel[value], index);      // se for variavel, move a a variavel para r8d e depois r8d para o array no index
+    if(array == 1) printf("  movq %%rdi, %%r10\n\n");
+    if(array == 2) printf("  movq %%rsi, %%r10\n\n");
+    if(array == 3) printf("  movq %%rdx, %%r10\n\n");
+
+  }
+
+  if(p1 == 'c') printf("  movl $%d, %d(%%r10)\n\n", value, index);        // se for constante move x para o endereço do array na posição index
+
+  else if(p1 == 'v')printf("  movl %d(%%rbp), %%r8d\n  movl %%r8d, %d(%%r10)\n\n", f.variavel[value], index);      // se for variavel, move a a variavel para r8d e depois r8d para o array no index
   
-    else if(p1 == 'p'){
+  else if(p1 == 'p'){
 
-        if(value == 1) printf("  movl %%edi, %d(%%r10)\n\n",index);   // se for o primeiro parametro passa %edi para o array
-        if(value == 2) printf("  movl %%esi, %d(%%r10)\n\n",index);   // se for o segundo parametro passa %esi para o array
-        if(value == 3) printf("  movl %%edx, %d(%%r10)\n\n",index);   // se for o terceiro parametro passa %edx para o array
-
-    }
-  }else{
-        if(array == 1) printf("  movq %%rdi, %%r10\n\n");
-        if(array == 2) printf("  movq %%rsi, %%r10\n\n");
-        if(array == 3) printf("  movq %%rdx, %%r10\n\n");
-
-        if(p1 == 'c') printf("  movl $%d, %d(%%r10)\n\n", value, index);        // se for constante move x para o endereço do array na posição index
-
-        else if(p1 == 'v')printf("  movl %d(%%rbp), %%r8d\n  movl %%r8d, %d(%%r10)\n\n", f.variavel[value], index);      // se for variavel, move a a variavel para r8d e depois r8d para o array no index
-  
-        else if(p1 == 'p'){
-
-            if(value == 1) printf("  movl %%edi, %d(%%r10)\n\n",index);   // se for o primeiro parametro passa %edi para o array
-            if(value == 2) printf("  movl %%esi, %d(%%r10)\n\n",index);   // se for o segundo parametro passa %esi para o array
-            if(value == 3) printf("  movl %%edx, %d(%%r10)\n\n",index);   // se for o terceiro parametro passa %edx para o array
-        }
+    if(value == 1) printf("  movl %%edi, %d(%%r10)\n\n",index);   // se for o primeiro parametro passa %edi para o array
+    if(value == 2) printf("  movl %%esi, %d(%%r10)\n\n",index);   // se for o segundo parametro passa %esi para o array
+    if(value == 3) printf("  movl %%edx, %d(%%r10)\n\n",index);   // se for o terceiro parametro passa %edx para o array
   }
 }
 
@@ -177,6 +168,7 @@ void get_array(funcao f, char* line){
 
     temp = strtok(NULL, " ");
   }
+  free(temp);
 }
 
 void declaracao_int (funcao *f1, char* line){
@@ -239,15 +231,15 @@ void call_function (funcao*f, char *line){
       }
 
       else if(temp[0] == 'c' && temp[1] == 'i'){      // se for um "ci" é constante
-
-        printf("  movl $%d, %s\n", temp[2]-'0', parametros[c]);   // move o valor da constante para o parametro[c];
+        sscanf(temp, "ci%d", &index);
+        printf("  movl $%d, %s\n", index, parametros[c]);   // move o valor da constante para o parametro[c];
         c++;
 
       }
       
       else if(temp[0] == 'v' && temp[1] == 'i'){      // se for "vi" é uma variavel do tipo inteiro
 
-        index = temp[2] - '0';
+        sscanf(temp,"vi%d", &index);
         printf("  movl %d(%%rbp), %s\n",f->variavel[index], parametros[c]);     // move para o registrador de parametro[c]
         c++;
 
@@ -255,7 +247,7 @@ void call_function (funcao*f, char *line){
       
       else if(temp[0] == 'v' && temp[1] == 'a'){        // se for um "va" é um array de inteiro
 
-        index = temp[2] - '0';
+        sscanf(temp,"va%d", &index);
         printf("  leaq %d(%%rbp), %%r10\n", f->variavel[index]);    // faz o leaq para r10
         parametros[c][1] = 'r';
         printf("  movq %%r10, %s\n", parametros[c]);      // move r10 para o parametro desejado
@@ -319,9 +311,12 @@ void call_function (funcao*f, char *line){
   
   }
   printf("  movq -8(%%rbp), %%rdi\n  movq -16(%%rbp), %%rsi\n  movq -24(%%rbp), %%rdx\n\n");
+
+  free(func);
+  free(temp);
 }
 
-void condicional(funcao f, char* line, int*cont){
+void condicional(funcao f, char* line, int cont){
   int val;
   char tipo;
 
@@ -346,7 +341,7 @@ void condicional(funcao f, char* line, int*cont){
 
   }
 
-  printf("  je after%d\n\n", *cont);
+  printf("  je after%d\n\n", cont);
 }
 
 void returns(char *line, funcao f){
@@ -362,21 +357,47 @@ void returns(char *line, funcao f){
     if(strncmp(line, "return p",8) == 0){   
 
       sscanf(line,"return p%c%d",&p1,&i1);
-      if(i1 == 1) {                 
-        printf("  movl %%edi, %%eax\n\nleave\nret\n");            // se for o primeiro parametro
-      }
-      if(i1 == 2) {
-        printf("  movl %%esi, %%eax\n\nleave\nret\n");            // se for o segundo parametro
-      }
-      if(i1 == 3) {
-        printf("  movl %%edx, %%eax\n\nleave\nret\n");            // se for o terceiro parametro
+      if(p1 == 'i'){      // se for int
+
+        if(i1 == 1) {                 
+          printf("  movl %%edi, %%eax\n\nleave\nret\n");            // se for o primeiro parametro
+        }
+        if(i1 == 2) {
+          printf("  movl %%esi, %%eax\n\nleave\nret\n");            // se for o segundo parametro
+        }
+        if(i1 == 3) {
+          printf("  movl %%edx, %%eax\n\nleave\nret\n");            // se for o terceiro parametro
+        }
+
+      }else{    // se for array
+
+        if(i1 == 1) {                 
+          printf("  movq %%rdi, %%rax\n\nleave\nret\n");            // se for o primeiro parametro
+        }
+        if(i1 == 2) {
+          printf("  movq %%rsi, %%rax\n\nleave\nret\n");            // se for o segundo parametro
+        }
+        if(i1 == 3) {
+          printf("  movq %%rdx, %%rax\n\nleave\nret\n");            // se for o terceiro parametro
+        }
       }
     }
 
     // retorna variavel
     if(strncmp(line, "return v", 8) == 0){
-      sscanf(line, "return vi%d", &i1);
-      printf("  movl %d(%%rbp), %%eax\n\n leave\n ret\n", f.variavel[i1]);
+
+      sscanf(line, "return v%*c%d", &i1);
+
+      if(line[8] == 'i'){
+        
+        printf("  movl %d(%%rbp), %%eax\n\n leave\n ret\n", f.variavel[i1]);
+        return;
+
+      }else{
+
+        printf("  leaq %d(%%rbp), %%rax\nleave\nret\n", f.variavel[i1]);
+
+      }
     }  
 
 

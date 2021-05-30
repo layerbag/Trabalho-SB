@@ -4,18 +4,31 @@ var vi1
 var vi2
 enddef
 
-set pa2 index ci4 with ci20
+set pa2 index ci1 with ci2021
 vi1 = ci5
 pi1 = vi1 + pi1
 pi1 = pi1 / ci2
 vi1 = pi1 * ci4
 vi1 = vi1 - ci2
+
 if vi1
-get pa2 index ci4 to vi2
+get pa2 index ci0 to vi2
 vi2 = call f2 vi2
-return vi2
+set pa2 index ci2 with vi2
+return pa2
 endif
 
-vi1 = vi1 + ci10
+set pa2 index ci0 with pi1
+return pa2
+end
+
+---------------------------------------------------------
+function f2 pi1
+def
+var vi1
+enddef
+
+vi1 = pi1 * ci2
+
 return vi1
 end

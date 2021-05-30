@@ -1,14 +1,15 @@
 #include <stdio.h>
 
-int f1(int x, int*v);
-int f2(int x){
-    return x * 2;
-}
+int* f1(int x, int*v);
 
 int main(){
     int x = 3;
-    int v[6] = {1,2,3,4,5,6};
-    printf("%d\n", f1(x,v));
-
+    int v1[3] = {20,40,60};
+    int*v;
+    
+    v = f1(x,v1);
+    for(x = 0; x < 3; x++){
+        printf("%d\n",v[x]);
+    }
     return 0;
 }

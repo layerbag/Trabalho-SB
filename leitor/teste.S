@@ -11,7 +11,7 @@ f1:
 
   movq %rsi, %r10
 
-  movl $20, 16(%r10)
+  movl $2021, 4(%r10)
 
   movl $5, %eax
   movl %eax, -28(%rbp)
@@ -40,7 +40,7 @@ f1:
   cmpl $0, -28(%rbp)
   je after0
 
-  movl 16(%rsi), %eax
+  movl 0(%rsi), %eax
 movl %eax, -32(%rbp)
 
   movq %rdi, -8(%rbp)
@@ -56,13 +56,33 @@ movl %eax, -32(%rbp)
   movq -16(%rbp), %rsi
   movq -24(%rbp), %rdx
 
-  movl -32(%rbp), %eax
+  movq %rsi, %r10
 
- leave
- ret
+  movl -32(%rbp), %r8d
+  movl %r8d, 8(%r10)
+
+  movq %rsi, %rax
+
+leave
+ret
 after0:
-  movl -28(%rbp), %eax
-  addl $10, %eax
+  movq %rsi, %r10
+
+  movl %edi, 0(%r10)
+
+  movq %rsi, %rax
+
+leave
+ret
+.globl f2
+f2:
+  pushq %rbp
+  movq %rsp, %rbp
+  subq $40, %rsp
+
+  movl %edi, %eax
+
+  imull $2, %eax
   movl %eax, -28(%rbp)
 
   movl -28(%rbp), %eax
